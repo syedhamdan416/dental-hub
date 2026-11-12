@@ -1,23 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSessionEmail, onAuthChange, signOut } from "./auth";
+import { getCurrentUser, onAuthChange, signOut, type AuthUser } from "./auth";
 
-// Tracks the signed-in email from the temporary local auth.
+// Tracks the signed-in Supabase user (null when signed out).
 export function useAuth() {
-  const [email, setEmail] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     let active = true;
 
-    getSessionEmail().then((current) => {
+    getCurrentUser().then((current) => {
       if (!active) return;
-      setEmail(current);
+      setUser(current);
       setLoading(false);
     });
 
-    const unsubscribe = onAuthChange(setEmail);
+    const unsubscribe = onAuthChange((next, isRecovery) => {
+      setUser(next);
+      if (isRecovery) setRecovery(true);
+      setLoading(false);
+    });
 
     return () => {
       active = false;
@@ -25,5 +30,5 @@ export function useAuth() {
     };
   }, []);
 
-  return { user: email ? { email } : null, loading, signOut };
+  return { user, loading, recovery, signOut };
 }

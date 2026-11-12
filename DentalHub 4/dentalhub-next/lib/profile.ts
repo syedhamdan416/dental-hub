@@ -17,10 +17,11 @@ export function nameFromEmail(email: string) {
   );
 }
 
-// Display name: the user's saved override, otherwise derived from their email.
+// Display name: a name saved in Settings, otherwise the name given at sign-up,
+// otherwise one derived from the email.
 export function useDisplayName() {
   const { user } = useAuth();
   const [saved, setSaved] = useLocalStorage<string>(STORAGE_KEYS.displayName, EMPTY_NAME);
-  const name = saved || (user ? nameFromEmail(user.email) : "Student");
+  const name = saved || user?.name || (user ? nameFromEmail(user.email) : "Student");
   return [name, setSaved] as const;
 }
