@@ -1,10 +1,13 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { signIn } from "../lib/auth";
 
 type LoginScreenProps = {
-  onLogin: (email: string) => void;
+  onLogin?: (email: string) => void;
 };
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -12,25 +15,84 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const visualRef = useRef<HTMLElement>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!email.trim() || !password) {
-      setMessage("Please enter your email and password.");
+  // Restrained cursor-following water sheen on the visual panel.
+  useEffect(() => {
+    const panel = visualRef.current;
+    if (
+      !panel ||
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       return;
     }
 
+    let frame = 0;
+    let latestX = 0;
+    let latestY = 0;
+
+    function onMove(event: PointerEvent) {
+      const target = panel as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      latestX = event.clientX - rect.left;
+      latestY = event.clientY - rect.top;
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        const x = Math.max(0, Math.min(100, (latestX / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, (latestY / rect.height) * 100));
+        target.style.setProperty("--water-x", `${x}%`);
+        target.style.setProperty("--water-y", `${y}%`);
+        target.style.setProperty("--water-shift-x", `${(x - 50) * -0.035}px`);
+        target.style.setProperty("--water-shift-y", `${(y - 50) * -0.035}px`);
+        target.classList.add("is-water-active");
+        frame = 0;
+      });
+    }
+
+    function onLeave() {
+      const target = panel as HTMLElement;
+      target.classList.remove("is-water-active");
+      target.style.setProperty("--water-x", "50%");
+      target.style.setProperty("--water-y", "50%");
+      target.style.setProperty("--water-shift-x", "0px");
+      target.style.setProperty("--water-shift-y", "0px");
+    }
+
+    panel.addEventListener("pointermove", onMove, { passive: true });
+    panel.addEventListener("pointerleave", onLeave);
+    return () => {
+      cancelAnimationFrame(frame);
+      panel.removeEventListener("pointermove", onMove);
+      panel.removeEventListener("pointerleave", onLeave);
+    };
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
     setMessage("");
-    onLogin(email.trim());
+    setSubmitting(true);
+
+    const result = await signIn(email.trim(), password);
+
+    setSubmitting(false);
+
+    if (result.error) {
+      setMessage(result.error);
+      return;
+    }
+
+    onLogin?.(result.email ?? email.trim());
   }
 
   return (
     <main className="login-screen" id="loginScreen">
-      <section className="login-visual">
-        <a className="brand brand-light text-wordmark" href="#" aria-label="DentalHub home">
+      <section className="login-visual" ref={visualRef}>
+        <Link className="brand brand-light text-wordmark" href="/login" aria-label="DentalHub home">
           Dental<span>Hub</span>
-        </a>
+        </Link>
 
         <div className="visual-content">
           <span className="eyebrow light-eyebrow">YOUR JOURNEY STARTS HERE</span>
@@ -57,17 +119,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
       <section className="login-panel">
         <div className="login-top">
-          <a className="mobile-brand text-wordmark" href="#" aria-label="DentalHub home">
+          <Link className="mobile-brand text-wordmark" href="/login" aria-label="DentalHub home">
             Dental<span>Hub</span>
-          </a>
+          </Link>
           <span className="secure-label"><span className="status-dot"></span> STUDENT PORTAL</span>
         </div>
 
         <div className="login-form-wrap">
-          <img
+          <Image
             className="login-logo"
-            src="/original-frontend/assets/dentalhub-logo.png"
+            src="/dentalhub-logo.png"
             alt="DentalHub logo"
+            width={1107}
+            height={973}
+            priority
           />
 
           <span className="eyebrow">WELCOME TO DENTALHUB</span>
@@ -92,7 +157,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             <div className="password-heading">
               <label htmlFor="password">Password</label>
-              <span className="demo-hint">Demo access</span>
             </div>
 
             <div className="input-wrap">
@@ -101,7 +165,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter any password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 required
                 value={password}
@@ -122,11 +186,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <input type="checkbox" id="remember" />
                 <span>Remember me</span>
               </label>
-              <span className="demo-note">Demo login only</span>
             </div>
 
-            <button className="primary-button login-button" type="submit">
-              Enter your workspace <span>↗</span>
+            <button className="primary-button login-button" type="submit" disabled={submitting}>
+              {submitting ? "Signing in…" : "Enter your workspace"} <span>↗</span>
             </button>
 
             <p className="login-message" role="status">{message}</p>

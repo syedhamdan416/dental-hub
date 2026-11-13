@@ -1,0 +1,11 @@
+export type XrayQuestion = { q: string; opts: string[]; a: number; why: string };
+export type DailyQuestion = { q: string; o: string[]; a: number; e: string };
+
+export const xrayQuestions: XrayQuestion[] = [
+ {q:"A periapical image shows a radiolucent area near the root apex. What is the safest interpretation?",opts:["It requires correlation with clinical tests and history","It proves one specific diagnosis","It is always normal","No further assessment is needed"],a:0,why:"A radiographic appearance must be correlated with symptoms, examination and appropriate tests."},
+ {q:"Which view is commonly used to examine the crowns of posterior teeth and the interproximal areas?",opts:["Bitewing","Occlusal only","Panoramic only","Lateral cephalogram"],a:0,why:"Bitewing radiographs are commonly used to assess posterior crowns and interproximal regions."},
+ {q:"What should be checked before interpreting an image?",opts:["Image quality and positioning","Only the file name","The patient's clothing","The screen brightness alone"],a:0,why:"Positioning, exposure, coverage and image quality affect interpretation."},
+ {q:"A radiograph is a two-dimensional representation of anatomy. What does this mean?",opts:["Structures can overlap","It shows every structure in 3D","It replaces clinical examination","It always identifies symptoms"],a:0,why:"Anatomical structures may be superimposed in a two-dimensional image."}
+];
+
+export const dailyQuestions: DailyQuestion[] = [{q:"Which tissue forms the hard outer covering of the crown?",o:["Enamel","Dentin","Pulp"],a:0,e:"Enamel is the highly mineralized outer covering of the anatomical crown."},{q:"Which tooth type is primarily adapted for cutting?",o:["Incisor","Molar","Premolar"],a:0,e:"Incisors have cutting edges and are adapted for cutting food."},{q:"What does a bitewing radiograph commonly help assess?",o:["Interproximal caries","Jaw joint movement","Tongue function"],a:0,e:"Bitewings are commonly used to assess posterior crowns and interproximal areas."},{q:"Which structure contains the tooth's nerves and blood vessels?",o:["Pulp","Enamel","Cementum"],a:0,e:"The dental pulp contains connective tissue, nerves and blood vessels."},{q:"What is the term for inflammation of the gingiva?",o:["Gingivitis","Pulpitis","Glossitis"],a:0,e:"Gingivitis refers to inflammation of the gingiva."}];
